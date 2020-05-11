@@ -7,26 +7,24 @@ const StuffPostSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      autopopulate: { select: "name phone photo location" }
+      autopopulate: { select: "name phone photo location" },
     },
 
-    kind: { type: String, required: true }, //lost, found
-
-    tag: { type: String, required: true, text: true },
-    place: { type: String, required: true, text: true },
     address: { type: String, required: true, text: true },
-
     phone: { type: String, text: true },
+    email: { type: String, text: true },
 
-    fee: { type: Number, required: true },
+    purchase: { type: Number, required: true, text: true },
+    tracking: { type: Number, text: true },
+    reason: { type: Number, required: true, text: true },
+    merchant: { type: String, required: true, text: true },
 
-    title: { type: String, required: true, text: true },
     description: { type: String, required: true, text: true },
 
     photos: [
       {
-        path: { type: String, required: true, lowercase: true }
-      }
+        path: { type: String, required: true, lowercase: true },
+      },
     ],
 
     ads: { type: Boolean, required: true },
@@ -36,8 +34,8 @@ const StuffPostSchema = new Schema(
       {
         type: Schema.Types.ObjectId,
         ref: "User",
-        required: true
-      }
+        required: true,
+      },
     ],
 
     reports: [
@@ -46,14 +44,14 @@ const StuffPostSchema = new Schema(
           type: Schema.Types.ObjectId,
           ref: "User",
           required: true,
-          autopopulate: { select: "name phone photo location" }
+          autopopulate: { select: "name phone photo location" },
         },
-        report: { type: String, required: true, text: true }
-      }
+        report: { type: String, required: true, text: true },
+      },
     ],
 
     createAt: { type: Date, default: Date.now },
-    updateAt: { type: Date, default: Date.now }
+    updateAt: { type: Date, default: Date.now },
   },
   { autoIndex: false }
 );
@@ -62,7 +60,7 @@ StuffPostSchema.index({ title: "text", description: "text" });
 StuffPostSchema.plugin(require("mongoose-autopopulate"));
 StuffPostSchema.plugin(mongoosePaginate);
 
-StuffPostSchema.pre("findOneAndUpdate", function(next) {
+StuffPostSchema.pre("findOneAndUpdate", function (next) {
   this.findOneAndUpdate({}, { updateAt: Date.now() });
   next();
 });

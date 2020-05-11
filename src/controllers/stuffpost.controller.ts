@@ -23,8 +23,8 @@ class StuffPostController {
         ...filter,
         $or: [
           { title: { $regex: key, $options: "i" } },
-          { description: { $regex: key, $options: "i" } }
-        ]
+          { description: { $regex: key, $options: "i" } },
+        ],
       };
     }
 
@@ -50,25 +50,25 @@ class StuffPostController {
     try {
       const url = req.params.url;
       const item = await StuffPost.findOne({
-        _id: new mongodb.ObjectID(url)
+        _id: new mongodb.ObjectID(url),
       }).populate("user");
 
       if (!item)
         return res.status(400).json({
           success: false,
-          msg: "Item not found"
+          msg: "Item not found",
         });
 
       res.status(200).json({
         success: true,
         msg: "Item found",
-        item: item
+        item: item,
       });
     } catch (err) {
       console.log("error => ", err);
       res.status(404).json({
         success: false,
-        msg: "Item not found."
+        msg: "Item not found.",
       });
     }
   }
@@ -79,11 +79,11 @@ class StuffPostController {
     let newStuffPostLimit = await StuffPostLimit.findOneAndUpdate(
       {
         user: req.body.user,
-        createAt: today.toDate()
+        createAt: today.toDate(),
       },
       { $inc: { limit: -1 } },
       {
-        new: true
+        new: true,
       }
     );
 
@@ -91,7 +91,7 @@ class StuffPostController {
       newStuffPostLimit = new StuffPostLimit({
         user: req.body.user,
         createAt: today.toDate(),
-        limit: 3
+        limit: 3,
       });
       await newStuffPostLimit.save();
     }
@@ -99,7 +99,7 @@ class StuffPostController {
     if (newStuffPostLimit.limit < 1) {
       res.status(200).json({
         success: false,
-        msg: "一天可能只有3次!"
+        msg: "Return up limited!",
       });
       return;
     }
@@ -108,37 +108,37 @@ class StuffPostController {
     try {
       const {
         user,
-        tag,
-        place,
         address,
-        kind,
-        fee,
         phone,
-        title,
+        email,
+        purchase,
+        trackinig,
+        merchant,
+        reason,
         description,
-        photos
+        photos,
       } = req.body;
 
       const newItem = new StuffPost({
         user: new mongodb.ObjectID(user),
-        tag,
-        place,
         address,
-        kind,
-        fee,
         phone,
-        title,
+        email,
+        purchase,
+        trackinig,
+        merchant,
+        reason,
         description,
         photos,
         browse: 0,
-        ads: false
+        ads: false,
       });
       await newItem.save();
 
       res.status(200).json({
         success: true,
-        msg: "成功!",
-        item: newItem
+        msg: "success!",
+        item: newItem,
       });
     } catch (err) {
       console.log("error => ", err);
@@ -146,17 +146,17 @@ class StuffPostController {
       await StuffPostLimit.findOneAndUpdate(
         {
           user: req.body.user,
-          createAt: today.toDate()
+          createAt: today.toDate(),
         },
         { $inc: { limit: 1 } },
         {
-          new: true
+          new: true,
         }
       );
 
       res.status(200).json({
         success: false,
-        msg: "失败了!"
+        msg: "error!",
       });
     }
   }
@@ -168,26 +168,26 @@ class StuffPostController {
         { _id: new mongodb.ObjectID(url) },
         req.body,
         {
-          new: true
+          new: true,
         }
       );
 
       if (!updatedItem)
         return res.status(400).json({
           success: false,
-          msg: "Item not updated"
+          msg: "Item not updated",
         });
 
       res.status(200).json({
         success: true,
         msg: "Item updated.",
-        item: updatedItem
+        item: updatedItem,
       });
     } catch (err) {
       console.log("error => ", err);
       res.status(500).json({
         success: false,
-        msg: "Item not updated"
+        msg: "Item not updated",
       });
     }
   }
@@ -203,19 +203,19 @@ class StuffPostController {
       if (!deletedItem)
         return res.status(400).json({
           success: false,
-          msg: "Item not deleted"
+          msg: "Item not deleted",
         });
 
       res.status(200).json({
         success: true,
         msg: "Item deleted.",
-        item: deletedItem
+        item: deletedItem,
       });
     } catch (err) {
       console.log("error => ", err);
       res.status(500).json({
         success: false,
-        msg: "Item not deleted"
+        msg: "Item not deleted",
       });
     }
   }
