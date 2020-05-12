@@ -13,7 +13,7 @@ export const signupValidation = (data: object) => {
     phone: Joi.string().required(),
     password: Joi.string()
       .pattern(/^[a-zA-Z0-9]{3,30}$/)
-      .required()
+      .required(),
   });
 
   return userSchema.validate(data);
@@ -21,14 +21,10 @@ export const signupValidation = (data: object) => {
 
 export const postValidation = (data: object) => {
   const postSchema = Joi.object().keys({
-    title: Joi.string()
-      .min(3)
-      .required(),
-    url: Joi.string()
-      .min(5)
-      .required(),
+    title: Joi.string().min(3).required(),
+    url: Joi.string().min(5).required(),
     content: Joi.string().required(),
-    image: Joi.string()
+    image: Joi.string(),
   });
 
   return postSchema.validate(data);
@@ -36,11 +32,9 @@ export const postValidation = (data: object) => {
 
 export const signinValidation = (data: object) => {
   const userSchema = Joi.object({
-    // email: Joi.string().required(),
-    phone: Joi.string().required(),
-    password: Joi.string()
-      .min(3)
-      .required()
+    email: Joi.string().required(),
+    // phone: Joi.string().required(),
+    password: Joi.string().min(3).required(),
   });
   return userSchema.validate(data);
 };
@@ -48,9 +42,7 @@ export const signinValidation = (data: object) => {
 export const loginValidation = (data: object) => {
   const adminSchema = Joi.object({
     phone: Joi.string().required(),
-    password: Joi.string()
-      .min(6)
-      .required()
+    password: Joi.string().min(6).required(),
   });
   return adminSchema.validate(data);
 };
@@ -60,7 +52,7 @@ export const registerValidation = (data: object) => {
     phone: Joi.string().required(),
     password: Joi.string()
       .pattern(/^[a-zA-Z0-9]{3,30}$/)
-      .required()
+      .required(),
   });
 
   return adminSchema.validate(data);

@@ -7,14 +7,14 @@ import {
   signupValidation,
   signinValidation,
   registerValidation,
-  loginValidation
+  loginValidation,
 } from "../libs/joi";
 import jwt from "jsonwebtoken";
 
 import moment from "moment";
 import Admin from "../models/Admin";
 
-const SESSION_TIME = 60 * 60 * 24 * 7;// week
+const SESSION_TIME = 60 * 60 * 24 * 7; // week
 
 class AuthController {
   constructor() {}
@@ -31,39 +31,33 @@ class AuthController {
     //   return res.status(400).json({ msg: "Username already exist." });
 
     // const { name, email, username, password } = req.body;
-    const { phone, password, otp } = req.body;
+    const { email, phone, password, otp } = req.body;
 
-    if (!otp || otp === "")
-      return res.status(200).json({ success: true, msg: "没有输入验证码" });
+    // if (!otp || otp === "")
+    //   return res.status(200).json({ success: true, msg: "没有输入验证码" });
 
-    console.log(otp, "otp from user input");
+    // const otpExist = await Otp.findOne({ phone, otp });
 
-    const otpExist = await Otp.findOne({ phone, otp });
+    // if (!otpExist)
+    //   return res.status(200).json({ success: false, msg: "输入验证码错误" });
 
-    console.log(otpExist, "otpExist");
-
-    if (!otpExist)
-      return res.status(200).json({ success: false, msg: "输入验证码错误" });
-
-    const currentUser = await User.findOne({ phone });
-
-    console.log(currentUser, 'currentUser')
+    const currentUser = await User.findOne({ email });
 
     if (currentUser) {
       res.status(200).json({
         success: false,
-        msg: "您已经注册。"
+        msg: "Already signed up!",
       });
       return;
     }
 
     try {
       const newUser = new User({
-        email: "test@test.com",
+        email,
         photo: "",
         name: "",
         phone,
-        password
+        password,
       });
       await newUser.save();
 
@@ -71,23 +65,20 @@ class AuthController {
         { _id: newUser._id },
         process.env["TOKEN_SECRET"] || "MyS3cr3tT0k3n",
         {
-          expiresIn: SESSION_TIME
+          expiresIn: SESSION_TIME,
         }
       );
 
-      res
-        .status(200)
-        .header("auth_token", token)
-        .json({
-          success: true,
-          msg: "成功!",
-          user: newUser
-        });
+      res.status(200).header("auth_token", token).json({
+        success: true,
+        msg: "success!",
+        user: newUser,
+      });
     } catch (err) {
       console.log("error => ", err);
       res.status(200).json({
         success: false,
-        msg: "失败了"
+        msg: "error",
       });
     }
   }
@@ -112,7 +103,7 @@ class AuthController {
         { phone },
         { password },
         {
-          new: true
+          new: true,
         }
       );
 
@@ -120,23 +111,20 @@ class AuthController {
         { _id: "" },
         process.env["TOKEN_SECRET"] || "MyS3cr3tT0k3n",
         {
-          expiresIn: SESSION_TIME
+          expiresIn: SESSION_TIME,
         }
       );
 
-      res
-        .status(200)
-        .header("auth_token", token)
-        .json({
-          success: true,
-          msg: "成功!",
-          user: updatedUser
-        });
+      res.status(200).header("auth_token", token).json({
+        success: true,
+        msg: "成功!",
+        user: updatedUser,
+      });
     } catch (err) {
       console.log("error => ", err);
       res.status(500).json({
         success: false,
-        msg: "失败了"
+        msg: "失败了",
       });
     }
   }
@@ -145,24 +133,26 @@ class AuthController {
     // body request validation
 
     const { error } = signinValidation(req.body);
-    if (error) return res.status(200).json({ success: false, msg: error.message });
+    if (error)
+      return res.status(200).json({ success: false, msg: error.message });
 
     // find user
     // const user = await User.findOne({ email: req.body.email });
 
     const user = await User.findOne({
-      phone: req.body.phone,
-      password: req.body.password
+      // phone: req.body.phone,
+      email: req.body.email,
+      password: req.body.password,
     });
 
     if (!user)
-      return res.status(200).json({ success: false, msg: "错误的信息。" });
+      return res.status(200).json({ success: false, msg: "no registered" });
 
-    if (user.block) 
-      return res.status(200).json({ success: false, msg: "您的帐户被禁止。" });    
-    
+    if (user.block)
+      return res.status(200).json({ success: false, msg: "blocked account!" });
+
     const rooms = await Room.find({
-      users: { $in: [new mongodb.ObjectID(user._id)] } //$elemMatch:{$eq:ObjectId("5e2916615f55cc6e3cb9838b")}
+      users: { $in: [new mongodb.ObjectID(user._id)] }, //$elemMatch:{$eq:ObjectId("5e2916615f55cc6e3cb9838b")}
     });
 
     // create token
@@ -170,19 +160,16 @@ class AuthController {
       { _id: user._id },
       process.env["TOKEN_SECRET"] || "MyS3cr3tT0k3n",
       {
-        expiresIn: SESSION_TIME
+        expiresIn: SESSION_TIME,
       }
     );
 
-    res
-      .status(200)
-      .header("auth_token", token)
-      .json({
-        success: true,
-        msg: "Sign in success.",
-        user,
-        rooms
-      });
+    res.status(200).header("auth_token", token).json({
+      success: true,
+      msg: "Sign in success.",
+      user,
+      rooms,
+    });
   }
 
   public async otp(req: Request, res: Response) {
@@ -192,49 +179,43 @@ class AuthController {
 
     const { phone, kind } = req.body;
 
-    if (!phone) return res.status(200).json({ success: false, msg: "错号码!" });
+    if (!phone)
+      return res.status(200).json({ success: false, msg: "wrong number!" });
 
-    const currentUser = await User.findOne({phone});
-    console.log(currentUser, '-----------------');
+    const currentUser = await User.findOne({ phone });
+    console.log(currentUser, "-----------------");
 
-    if (kind && kind === "forgot") {      
+    if (kind && kind === "forgot") {
       if (!currentUser) {
         res.status(200).json({
           success: false,
-          msg: "号码错了!"
+          msg: "error!",
         });
         return;
-      }      
+      }
     } else {
       if (currentUser) {
         res.status(200).json({
           success: false,
-          msg: "已经注册的用户!"
+          msg: "already registered!",
         });
         return;
-      }      
+      }
     }
 
     ///////////////////////////////////////////////////
 
-    let IHuyi = require("ihuyi106");
-
-    let apiId = "C49435409";
-    let apiKey = "566307019bd9d17ce6c7686c4f876780"; // international api key, if exist
-
-    // apiKey is optional
-    let iHuyi = new IHuyi(apiId, apiKey);
     let otp_code = Math.floor(1000 + Math.random() * 9000);
 
     const today = moment().startOf("day");
     let newOtp = await Otp.findOneAndUpdate(
       {
         phone,
-        createAt: today.toDate()
+        createAt: today.toDate(),
       },
       { phone, otp: otp_code, $inc: { limit: -1 } },
       {
-        new: true
+        new: true,
       }
     );
 
@@ -243,7 +224,7 @@ class AuthController {
         phone,
         otp: otp_code,
         createAt: today.toDate(),
-        limit: 3
+        limit: 10,
       });
       await newOtp.save();
     }
@@ -256,33 +237,38 @@ class AuthController {
     if (newOtp.limit < 1) {
       res.status(200).json({
         success: false,
-        msg: "一天可能只有3次!"
+        msg: "3 times a day",
       });
       return;
     }
 
-    let content =
-      "您的验证码是：" + otp_code + "。请不要把验证码泄露给其他人。";
+    let content = `Returnup verification code is ${otp_code}`;
 
-    console.log("will send to the IHuyi...", content);
+    console.log("will send sms  ...", content);
 
-    iHuyi.send(phone, content, function(err, smsId) {
-      if (err) {
-        console.log("err occured during otp...", err.message, err.code);
-        res.status(200).json({
-          success: false,
-          msg: "号码错了!"//"正在发送验证码...."//err.message
-        });
-      } else {
-        console.log("SMS sent, and smsId is " + smsId);
-        res.status(200).json({
-          success: true,
-          msg: "我们发送给您验证码"
-        });
-      }
-    });
+    let sid = "ACc7acca4ca70e55a3527d0d45dc15af93";
+    let stoken = "f98728bd89d91c00065c00a3c9bea504";
 
-    ///////////////////////////////////////////////////
+    const client = require("twilio")(sid, stoken);
+
+    try {
+      const message = await client.messages.create({
+        to: "+86 15567666835",
+        from: "8615567666835",
+        body: content,
+      });
+      console.log(message, "... from the twilio ...");
+      res.status(200).json({
+        success: true,
+        msg: message,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(200).json({
+        success: false,
+        msg: "error!",
+      });
+    }
   }
 
   public async device(req: Request, res: Response) {
@@ -293,26 +279,26 @@ class AuthController {
         { _id: user_id },
         { device },
         {
-          new: true
+          new: true,
         }
       );
 
       if (!updatedUser)
         return res.status(200).json({
           success: false,
-          msg: "User not updated"
+          msg: "User not updated",
         });
 
       res.status(200).json({
         success: true,
         msg: "User updated.",
-        user: updatedUser
+        user: updatedUser,
       });
     } catch (err) {
       console.log("error => ", err);
       res.status(200).json({
         success: false,
-        msg: "User not updated"
+        msg: "User not updated",
       });
     }
   }
@@ -341,23 +327,20 @@ class AuthController {
         { _id: newAdmin._id },
         process.env["TOKEN_SECRET"] || "MyS3cr3tT0k3n",
         {
-          expiresIn: SESSION_TIME
+          expiresIn: SESSION_TIME,
         }
       );
 
-      res
-        .status(200)
-        .header("auth_token", token)
-        .json({
-          success: true,
-          msg: "User saved.",
-          user: newAdmin
-        });
+      res.status(200).header("auth_token", token).json({
+        success: true,
+        msg: "User saved.",
+        user: newAdmin,
+      });
     } catch (err) {
       console.log("error => ", err);
       res.status(200).json({
         success: false,
-        msg: "User not saved"
+        msg: "User not saved",
       });
     }
   }
@@ -369,7 +352,7 @@ class AuthController {
 
     const admin = await Admin.findOne({
       phone,
-      password
+      password,
     });
 
     if (!admin)
@@ -379,7 +362,7 @@ class AuthController {
       { _id: admin._id },
       process.env["TOKEN_SECRET"] || "MyS3cr3tT0k3n",
       {
-        expiresIn: SESSION_TIME
+        expiresIn: SESSION_TIME,
       }
     );
 
@@ -392,7 +375,7 @@ class AuthController {
         auth_token: token,
         success: true,
         msg: "Sign in success.",
-        user: admin
+        user: admin,
       });
   }
 
@@ -416,7 +399,7 @@ class AuthController {
         { phone },
         { password },
         {
-          new: true
+          new: true,
         }
       );
 
@@ -424,23 +407,20 @@ class AuthController {
         { _id: "" },
         process.env["TOKEN_SECRET"] || "MyS3cr3tT0k3n",
         {
-          expiresIn: SESSION_TIME
+          expiresIn: SESSION_TIME,
         }
       );
 
-      res
-        .status(200)
-        .header("auth_token", token)
-        .json({
-          success: true,
-          msg: "成功!",
-          user: updatedUser
-        });
+      res.status(200).header("auth_token", token).json({
+        success: true,
+        msg: "成功!",
+        user: updatedUser,
+      });
     } catch (err) {
       console.log("error => ", err);
       res.status(500).json({
         success: false,
-        msg: "失败了"
+        msg: "失败了",
       });
     }
   }
