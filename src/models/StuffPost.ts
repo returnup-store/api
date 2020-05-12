@@ -14,10 +14,12 @@ const StuffPostSchema = new Schema(
     phone: { type: String, text: true },
     email: { type: String, text: true },
 
-    purchase: { type: Number, required: true, text: true },
-    tracking: { type: Number, text: true },
-    reason: { type: Number, required: true, text: true },
+    purchase: { type: String, required: true, text: true },
+    tracking: { type: String, required: true, text: true },
     merchant: { type: String, required: true, text: true },
+
+    category: { type: Number, required: true, text: true },
+    reason: { type: Number, required: true, text: true },
 
     description: { type: String, required: true, text: true },
 
